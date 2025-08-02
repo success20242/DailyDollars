@@ -1,5 +1,5 @@
 import { z } from "zod";
-import LRU from "lru-cache";
+import { LRUCache } from "lru-cache";
 
 const PlanRequestSchema = z.object({
   skills: z.string().min(1, "Skills is required"),
@@ -9,13 +9,15 @@ const PlanRequestSchema = z.object({
   email: z.string().email("Invalid email format"),
 });
 
+// In-memory cache for storing generated plans
 const cache = new Map();
 
 const rateLimitWindowMs = 60 * 1000; // 1 minute
 const maxRequestsPerWindow = 5;
 
-const rateLimiter = new LRU({
-  max: 5000,
+// Correctly instantiate LRUCache
+const rateLimiter = new LRUCache({
+  max: 5000,      // max entries in cache
   ttl: rateLimitWindowMs,
 });
 
@@ -24,22 +26,26 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // Get client IP for rate limiting
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   if (!ip) {
     return res.status(400).json({ error: "Unable to identify client IP" });
   }
 
-  const currentCount = rateLimiter.get(ip) || 0;
+  // Rate limiting logic
+  const currentCount = rateLimiter.get(ip) ?? 0;
   if (currentCount >= maxRequestsPerWindow) {
     return res.status(429).json({ error: "Too many requests, please try again later." });
   }
   rateLimiter.set(ip, currentCount + 1);
 
+  // Validate input
   const parsed = PlanRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: "Invalid input", issues: parsed.error.format() });
   }
 
+  // Check cache first
   const cacheKey = JSON.stringify(parsed.data);
   if (cache.has(cacheKey)) {
     return res.status(200).json({ plan: cache.get(cacheKey) });
@@ -94,6 +100,7 @@ Generate a clear, actionable 3-step plan with recommended tools or websites.
       return res.status(500).json({ error: "Empty response from OpenAI" });
     }
 
+    // Cache the plan
     cache.set(cacheKey, plan);
 
     return res.status(200).json({ plan });
