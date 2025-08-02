@@ -1,75 +1,99 @@
-import { z } from "zod";
+import React, { useState } from 'react';  
+import Head from 'next/head';
+import emailjs from 'emailjs-com';
+import generatePDF from '../utils/generatePDF';
 
-const PlanRequestSchema = z.object({
-  skills: z.string().min(1),
-  budget: z.string().min(1),
-  time: z.string().min(1),
-  target: z.string().min(1),
-  email: z.string().email(),
-});
+export default function Home() {
+  const [form, setForm] = useState({
+    skills: '',
+    budget: '',
+    time: '',
+    target: '',
+    email: '',
+  });
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  // Validate request body
-  const parsed = PlanRequestSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
-  }
-
-  const { skills, budget, time, target } = parsed.data;
-
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-  if (!OPENAI_API_KEY) {
-    return res.status(500).json({ error: "OpenAI API key not configured" });
-  }
-
-  try {
-    const prompt = `
-You are a helpful AI that generates personalized plans to help users earn money online.
-
-Skills: ${skills}
-Budget: ${budget}
-Available Time Per Day: ${time}
-Daily Income Target: ${target}
-
-Generate a clear, actionable 3-step plan using legal, ethical, sustainable methods. Mention tools/websites.
-    `.trim();
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "You are a practical online income strategist." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorDetails = await response.text();
-      console.error("OpenAI API error:", errorDetails);
-      return res.status(response.status).json({ error: "OpenAI API error" });
+  const handleGenerate = async () => {
+    setLoading(true);
+    setError('');
+    setSent(false); // Reset sent status when regenerating
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      setResult(data.plan);
+    } catch (err) {
+      setError('Failed to generate. Try again.');
     }
+    setLoading(false);
+  };
 
-    const data = await response.json();
-    const plan = data.choices?.[0]?.message?.content?.trim();
-
-    if (!plan) {
-      return res.status(500).json({ error: "Empty response from OpenAI" });
+  const handleSendEmail = async () => {
+    setError('');
+    setSent(false);
+    try {
+      console.log("Sending email with message:", result);
+      const response = await emailjs.send(
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+        { ...form, message: result },
+        process.env.NEXT_PUBLIC_EMAILJS_USER_ID
+      );
+      console.log("EmailJS response:", response);
+      setSent(true);
+    } catch (err) {
+      console.error("Email send error:", err);
+      setError('Failed to send email.');
     }
+  };
 
-    return res.status(200).json({ plan });
-  } catch (error) {
-    console.error("API error:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
+  return (
+    <>
+      <Head>
+        <title>DailyDollars</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <main className="container">
+        <h1>💼 DailyDollars</h1>
+        <p className="tagline">Plan your income strategy and reach your goals.</p>
+
+        <div className="form-grid">
+          <input name="skills" placeholder="Your Skills" value={form.skills} onChange={handleChange} />
+          <input name="budget" placeholder="Budget (e.g., low)" value={form.budget} onChange={handleChange} />
+          <input name="time" placeholder="Time/Day (e.g., 2 hours)" value={form.time} onChange={handleChange} />
+          <input name="target" placeholder="Daily Target ($)" value={form.target} onChange={handleChange} />
+          <input name="email" placeholder="Your Email" value={form.email} onChange={handleChange} />
+        </div>
+
+        <button onClick={handleGenerate} disabled={loading}>
+          {loading ? 'Generating...' : 'Generate Plan'}
+        </button>
+
+        {error && <p className="error">{error}</p>}
+
+        {result && (
+          <div className="result">
+            <h2>📄 Your Plan Preview</h2>
+            <pre>{result}</pre>
+            <div className="actions">
+              <button onClick={() => generatePDF(result)}>📥 Download PDF</button>
+              <button onClick={handleSendEmail}>📧 Send to Email</button>
+            </div>
+            {sent && <p className="success">✅ Email sent successfully!</p>}
+          </div>
+        )}
+      </main>
+    </>
+  );
 }
