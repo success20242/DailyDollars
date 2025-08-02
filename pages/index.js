@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import Head from 'next/head';
 import emailjs from 'emailjs-com';
 import generatePDF from '../utils/generatePDF';
-import '../styles/globals.css';
 
 export default function Home() {
   const [form, setForm] = useState({
