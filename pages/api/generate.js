@@ -1,99 +1,104 @@
-import React, { useState } from 'react';  
-import Head from 'next/head';
-import emailjs from 'emailjs-com';
-import generatePDF from '../utils/generatePDF';
+import { z } from "zod";
+import LRU from "lru-cache";
 
-export default function Home() {
-  const [form, setForm] = useState({
-    skills: '',
-    budget: '',
-    time: '',
-    target: '',
-    email: '',
-  });
-  const [result, setResult] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
+const PlanRequestSchema = z.object({
+  skills: z.string().min(1, "Skills is required"),
+  budget: z.string().min(1, "Budget is required"),
+  time: z.string().min(1, "Time is required"),
+  target: z.string().min(1, "Target is required"),
+  email: z.string().email("Invalid email format"),
+});
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+const cache = new Map();
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    setError('');
-    setSent(false); // Reset sent status when regenerating
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      setResult(data.plan);
-    } catch (err) {
-      setError('Failed to generate. Try again.');
+const rateLimitWindowMs = 60 * 1000; // 1 minute
+const maxRequestsPerWindow = 5;
+
+const rateLimiter = new LRU({
+  max: 5000,
+  ttl: rateLimitWindowMs,
+});
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  if (!ip) {
+    return res.status(400).json({ error: "Unable to identify client IP" });
+  }
+
+  const currentCount = rateLimiter.get(ip) || 0;
+  if (currentCount >= maxRequestsPerWindow) {
+    return res.status(429).json({ error: "Too many requests, please try again later." });
+  }
+  rateLimiter.set(ip, currentCount + 1);
+
+  const parsed = PlanRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid input", issues: parsed.error.format() });
+  }
+
+  const cacheKey = JSON.stringify(parsed.data);
+  if (cache.has(cacheKey)) {
+    return res.status(200).json({ plan: cache.get(cacheKey) });
+  }
+
+  const { skills, budget, time, target } = parsed.data;
+
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: "OpenAI API key not configured" });
+  }
+
+  try {
+    const prompt = `
+You are a helpful AI that generates personalized, legal, ethical, and sustainable online income plans.
+
+Skills: ${skills}
+Budget: ${budget}
+Available Time Per Day: ${time}
+Daily Income Target: ${target}
+
+Generate a clear, actionable 3-step plan with recommended tools or websites.
+`.trim();
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "You are a practical online income strategist." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorDetails = await response.text();
+      console.error("OpenAI API error:", errorDetails);
+      return res.status(response.status).json({ error: "OpenAI API error", details: errorDetails });
     }
-    setLoading(false);
-  };
 
-  const handleSendEmail = async () => {
-    setError('');
-    setSent(false);
-    try {
-      console.log("Sending email with message:", result);
-      const response = await emailjs.send(
-        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
-        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
-        { ...form, message: result },
-        process.env.NEXT_PUBLIC_EMAILJS_USER_ID
-      );
-      console.log("EmailJS response:", response);
-      setSent(true);
-    } catch (err) {
-      console.error("Email send error:", err);
-      setError('Failed to send email.');
+    const data = await response.json();
+    const plan = data.choices?.[0]?.message?.content?.trim();
+
+    if (!plan) {
+      return res.status(500).json({ error: "Empty response from OpenAI" });
     }
-  };
 
-  return (
-    <>
-      <Head>
-        <title>DailyDollars</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    cache.set(cacheKey, plan);
 
-      <main className="container">
-        <h1>💼 DailyDollars</h1>
-        <p className="tagline">Plan your income strategy and reach your goals.</p>
-
-        <div className="form-grid">
-          <input name="skills" placeholder="Your Skills" value={form.skills} onChange={handleChange} />
-          <input name="budget" placeholder="Budget (e.g., low)" value={form.budget} onChange={handleChange} />
-          <input name="time" placeholder="Time/Day (e.g., 2 hours)" value={form.time} onChange={handleChange} />
-          <input name="target" placeholder="Daily Target ($)" value={form.target} onChange={handleChange} />
-          <input name="email" placeholder="Your Email" value={form.email} onChange={handleChange} />
-        </div>
-
-        <button onClick={handleGenerate} disabled={loading}>
-          {loading ? 'Generating...' : 'Generate Plan'}
-        </button>
-
-        {error && <p className="error">{error}</p>}
-
-        {result && (
-          <div className="result">
-            <h2>📄 Your Plan Preview</h2>
-            <pre>{result}</pre>
-            <div className="actions">
-              <button onClick={() => generatePDF(result)}>📥 Download PDF</button>
-              <button onClick={handleSendEmail}>📧 Send to Email</button>
-            </div>
-            {sent && <p className="success">✅ Email sent successfully!</p>}
-          </div>
-        )}
-      </main>
-    </>
-  );
+    return res.status(200).json({ plan });
+  } catch (error) {
+    console.error("API error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }
