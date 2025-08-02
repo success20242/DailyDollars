@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; 
+import React, { useState } from 'react';  
 import Head from 'next/head';
 import emailjs from 'emailjs-com';
 import generatePDF from '../utils/generatePDF';
@@ -39,6 +39,7 @@ export default function Home() {
 
   const handleSendEmail = async () => {
     try {
+      console.log("Sending email with message:", result);
       await emailjs.send(
         process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
         process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
@@ -47,7 +48,8 @@ export default function Home() {
       );
       setSent(true);
     } catch (err) {
-      setError('Failed to send email.');
+      console.error("Email send error:", err);
+      setError("Failed to send email.");
     }
   };
 
