@@ -1,84 +1,94 @@
-// pages/index.js
-import Head from "next/head";
-import { useState } from "react";
+import React, { useState } from 'react';
+import Head from 'next/head';
+import emailjs from 'emailjs-com';
+import generatePDF from '../utils/generatePDF';
+import '../styles/globals.css';
 
 export default function Home() {
-  const [formData, setFormData] = useState({
-    skills: "",
-    budget: "",
-    time: "",
-    target: "",
-    email: "",
+  const [form, setForm] = useState({
+    skills: '',
+    budget: '',
+    time: '',
+    target: '',
+    email: '',
   });
+  const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState("");
-  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleGenerate = async () => {
     setLoading(true);
-    setError("");
-    setResponse("");
-
+    setError('');
     try {
-      const res = await fetch("/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (res.ok) {
-        setResponse(data.message || "Plan generated successfully.");
-      } else {
-        setError(data.error || "An error occurred.");
-      }
+      setResult(data.plan);
     } catch (err) {
-      setError("Failed to connect to the server.");
-    } finally {
-      setLoading(false);
+      setError('Failed to generate. Try again.');
+    }
+    setLoading(false);
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      await emailjs.send(
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
+        { ...form, message: result },
+        process.env.NEXT_PUBLIC_EMAILJS_USER_ID
+      );
+      setSent(true);
+    } catch (err) {
+      setError('Failed to send email.');
     }
   };
 
   return (
     <>
       <Head>
-        <title>Poverty Bye Bye - Planner</title>
+        <title>DailyDollars</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="container">
-        <h1>💼 Income Plan Generator</h1>
-        <form onSubmit={handleSubmit}>
-          <label>
-            Your Skills:
-            <input type="text" name="skills" value={formData.skills} onChange={handleChange} required />
-          </label>
-          <label>
-            Budget (USD):
-            <input type="text" name="budget" value={formData.budget} onChange={handleChange} required />
-          </label>
-          <label>
-            Time Available (per day):
-            <input type="text" name="time" value={formData.time} onChange={handleChange} required />
-          </label>
-          <label>
-            Daily Income Target (USD):
-            <input type="text" name="target" value={formData.target} onChange={handleChange} required />
-          </label>
-          <label>
-            Email Address:
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required />
-          </label>
-          <button type="submit" disabled={loading}>
-            {loading ? "Generating..." : "Generate Plan"}
-          </button>
-        </form>
-        {response && <div className="success">{response}</div>}
-        {error && <div className="error">{error}</div>}
-      </div>
+
+      <main className="container">
+        <h1>💼 DailyDollars</h1>
+        <p className="tagline">Plan your income strategy and reach your goals.</p>
+
+        <div className="form-grid">
+          <input name="skills" placeholder="Your Skills" value={form.skills} onChange={handleChange} />
+          <input name="budget" placeholder="Budget (e.g., low)" value={form.budget} onChange={handleChange} />
+          <input name="time" placeholder="Time/Day (e.g., 2 hours)" value={form.time} onChange={handleChange} />
+          <input name="target" placeholder="Daily Target ($)" value={form.target} onChange={handleChange} />
+          <input name="email" placeholder="Your Email" value={form.email} onChange={handleChange} />
+        </div>
+
+        <button onClick={handleGenerate} disabled={loading}>
+          {loading ? 'Generating...' : 'Generate Plan'}
+        </button>
+
+        {error && <p className="error">{error}</p>}
+
+        {result && (
+          <div className="result">
+            <h2>📄 Your Plan Preview</h2>
+            <pre>{result}</pre>
+            <div className="actions">
+              <button onClick={() => generatePDF(result)}>📥 Download PDF</button>
+              <button onClick={handleSendEmail}>📧 Send to Email</button>
+            </div>
+            {sent && <p className="success">✅ Email sent successfully!</p>}
+          </div>
+        )}
+      </main>
     </>
   );
 }
