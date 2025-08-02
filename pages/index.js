@@ -23,6 +23,7 @@ export default function Home() {
   const handleGenerate = async () => {
     setLoading(true);
     setError('');
+    setSent(false); // Reset sent when generating new plan
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -33,23 +34,27 @@ export default function Home() {
       setResult(data.plan);
     } catch (err) {
       setError('Failed to generate. Try again.');
+      console.error('Generate error:', err);
     }
     setLoading(false);
   };
 
   const handleSendEmail = async () => {
+    setError('');
+    setSent(false);
     try {
       console.log("Sending email with message:", result);
-      await emailjs.send(
+      const response = await emailjs.send(
         process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
         process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID,
         { ...form, message: result },
         process.env.NEXT_PUBLIC_EMAILJS_USER_ID
       );
+      console.log("EmailJS response:", response);
       setSent(true);
     } catch (err) {
       console.error("Email send error:", err);
-      setError("Failed to send email.");
+      setError('Failed to send email.');
     }
   };
 
