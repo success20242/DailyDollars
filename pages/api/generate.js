@@ -69,9 +69,10 @@ Available Time Per Day: ${time}
 Daily Income Target: ${target}
 
 1. Generate a clear, actionable 3-step plan with recommended tools or websites.
-2. Suggest 3 YouTube videos (provide title and direct URL) that would help someone with these skills learn or improve, preferably from reputable creators.
-3. Suggest 3 current job opportunities (provide job title and direct URL) that match these skills, from well-known job sites (e.g. LinkedIn, Indeed, Glassdoor).
+2. Suggest 3 YouTube videos (provide title) that would help someone with these skills learn or improve, preferably from reputable creators.
+3. Suggest 3 current job opportunities (provide job title) that match these skills, from well-known job sites (e.g. LinkedIn, Indeed, Glassdoor).
 Please format your response with clear sections: "Plan", "YouTube Videos", "Job Opportunities".
+And avoid the use of * in the generated plan.
 `.trim();
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
