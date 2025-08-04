@@ -59,6 +59,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    // INTEGRATION OF YOUTUBE AND JOB LINKS SUGGESTION
     const prompt = `
 You are a helpful AI that generates personalized, legal, ethical, and sustainable online income plans.
 
@@ -67,7 +68,10 @@ Budget: ${budget}
 Available Time Per Day: ${time}
 Daily Income Target: ${target}
 
-Generate a clear, actionable 3-step plan with recommended tools or websites.
+1. Generate a clear, actionable 3-step plan with recommended tools or websites.
+2. Suggest 3 YouTube videos (provide title and direct URL) that would help someone with these skills learn or improve, preferably from reputable creators.
+3. Suggest 3 current job opportunities (provide job title and direct URL) that match these skills, from well-known job sites (e.g. LinkedIn, Indeed, Glassdoor).
+Please format your response with clear sections: "Plan", "YouTube Videos", "Job Opportunities".
 `.trim();
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -83,7 +87,7 @@ Generate a clear, actionable 3-step plan with recommended tools or websites.
           { role: "user", content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 700,
       }),
     });
 
