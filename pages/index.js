@@ -75,13 +75,13 @@ export default function Home() {
         <meta property="og:description" content="Plan your daily income strategy with AI based on your skillset, time, and goals." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://daily-dollars.vercel.app/" />
-        <meta property="og:image" content="https://daily-dollars.vercel.app/https://i.imgur.com/IhpHXU9.png" />
+        <meta property="og:image" content="https://i.imgur.com/IhpHXU9.png" />
 
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="DailyDollars" />
         <meta name="twitter:description" content="Generate your income strategy daily with AI." />
-        <meta name="twitter:image" content="https://daily-dollars.vercel.app/https://i.imgur.com/IhpHXU9.png" />
+        <meta name="twitter:image" content="https://i.imgur.com/IhpHXU9.png" />
 
         {/* JSON-LD Schema */}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `
@@ -89,12 +89,12 @@ export default function Home() {
             "@context": "https://schema.org",
             "@type": "WebApplication",
             "name": "DailyDollars",
-            "url": "https://yourdomain.com",
+            "url": "https://daily-dollars.vercel.app/",
             "description": "Generate a daily income plan tailored to your skills and budget.",
             "applicationCategory": "FinanceApplication",
             "operatingSystem": "All",
             "browserRequirements": "Requires JavaScript",
-            "logo": "https://daily-dollars.vercel.app/https://i.imgur.com/IhpHXU9.png"
+            "logo": "https://i.imgur.com/IhpHXU9.png"
           }
         ` }} />
       </Head>
