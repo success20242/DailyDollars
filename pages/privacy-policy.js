@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
         Your information is never sold or shared. Data like your email is only used for sending your requested plan.
       </p>
       <p>
-        For questions, contact us at <a href="mailto:dailydollars.africa@gmail.com">mailto:dailydollars.africa@gmail.com</a>.
+        For questions, contact us at <a href=":dailydollars.africa@gmail.com">:dailydollars.africa@gmail.com</a>.
       </p>
     </div>
   );
