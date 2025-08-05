@@ -135,6 +135,7 @@ export default function Home() {
             <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> |{" "}
             <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a>
           </p>
+          <p style={{ marginTop: '0.5rem' }}>© 2025 DailyDollars. All rights reserved.</p>
         </footer>
       </main>
     </>
