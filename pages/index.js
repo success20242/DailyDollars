@@ -128,6 +128,14 @@ export default function Home() {
             {sent && <p className="success">✅ Email sent successfully!</p>}
           </div>
         )}
+
+        {/* Footer with Privacy Policy and Terms */}
+        <footer style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>
+          <p>
+            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> |{" "}
+            <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+          </p>
+        </footer>
       </main>
     </>
   );
