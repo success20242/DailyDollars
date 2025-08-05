@@ -1,4 +1,4 @@
-import React, { useState } from 'react';  
+import React, { useState } from 'react';
 import Head from 'next/head';
 import emailjs from 'emailjs-com';
 import generatePDF from '../utils/generatePDF';
@@ -23,7 +23,7 @@ export default function Home() {
   const handleGenerate = async () => {
     setLoading(true);
     setError('');
-    setSent(false); // Reset sent when generating new plan
+    setSent(false);
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -61,8 +61,42 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>DailyDollars</title>
+        <title>DailyDollars - Smart Income Strategy Generator</title>
+        <meta name="description" content="DailyDollars helps you generate a personalized income strategy based on your skills, time, and goals." />
+        <meta name="keywords" content="income planner, budget, daily income, side hustle, make money, productivity tool" />
+        <meta name="author" content="DailyDollars Team" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
+
+        {/* Open Graph Meta */}
+        <meta property="og:title" content="DailyDollars - Smart Income Strategy Generator" />
+        <meta property="og:description" content="Plan your daily income strategy with AI based on your skillset, time, and goals." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://yourdomain.com/" />
+        <meta property="og:image" content="https://yourdomain.com/preview.jpg" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="DailyDollars" />
+        <meta name="twitter:description" content="Generate your income strategy daily with AI." />
+        <meta name="twitter:image" content="https://yourdomain.com/preview.jpg" />
+
+        {/* JSON-LD Schema */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: `
+          {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "DailyDollars",
+            "url": "https://yourdomain.com",
+            "description": "Generate a daily income plan tailored to your skills and budget.",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "All",
+            "browserRequirements": "Requires JavaScript",
+            "logo": "https://yourdomain.com/logo.png"
+          }
+        ` }} />
       </Head>
 
       <main className="container">
