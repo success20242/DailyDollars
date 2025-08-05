@@ -68,10 +68,10 @@ Budget: ${budget}
 Available Time Per Day: ${time}
 Daily Income Target: ${target}
 
-1. Generate a clear, actionable 3-step plan with recommended tools or websites.
-2. Suggest 3 YouTube videos (provide title) that would help someone with these skills learn or improve, preferably from reputable creators.
-3. Suggest 3 current job opportunities (provide job title) that match these skills, from well-known job sites (e.g. LinkedIn, Indeed, Glassdoor).
-Please format your response with clear sections: "Plan", "YouTube Videos", "Job Opportunities".
+1. Generate a clear, actionable 3-step plan with recommended tools or websites (avoid the use of * in the plan).
+2. Suggest 3 YouTube videos (provide title) that would help someone with these skills learn or improve, preferably from reputable creators (avoid the use of * in the plan).
+3. Suggest 3 current job opportunities (provide job title) that match these skills, from well-known job sites (e.g. LinkedIn, Indeed, Glassdoor) (avoid the use of * in the plan).
+Please format your response with clear sections: "Plan", "YouTube Videos", "Job Opportunities" (avoid the use of * in the plan).
 And avoid the use of * in the generated plan.
 `.trim();
 
