@@ -62,6 +62,7 @@ export default function Home() {
     <>
       <Head>
         <title>DailyDollars - Smart Income Strategy Generator</title>
+        <meta name="msvalidate.01" content="C59A5741CB68217600421364BBEC3266" />
         <meta name="description" content="DailyDollars helps you generate a personalized income strategy based on your skills, time, and goals." />
         <meta name="google-site-verification" content="G68a3mRZtGTDKcAOHvC2YFHpGavV38TRiQCNQgH2rE0" />
         <meta name="keywords" content="income planner, budget, daily income, side hustle, make money, productivity tool" />
